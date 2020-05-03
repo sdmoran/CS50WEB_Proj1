@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container">
+    {% if error %}
+        <h4 style="color: red;">Failed to login! User does not exist or password incorrect.</h4>
+    {% endif %}
+
+    {% if logged_in %}
+        <h3>You're already logged in!</h3>
+    {% else %}
+        <h2>Not registered? <a href="{{ url_for('signup') }}">Signup!</a></h2>
+        <form action="{{ url_for('login_user') }}" method="post">
+            <input type="text" name="username" placeholder="Username">
+            <input type="password" name="password" placeholder="Password">
+            <button>Submit</button>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}
