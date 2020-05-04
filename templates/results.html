@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block body %}
+
+{% if not logged_in%}
+<div class="container">
+    <h4>You must be logged in to access this page.</h4>
+</div>
+{% else %}
+<div class="container">
+    {% if error %}
+        <h3>Error! Try again.</h3>
+    {% endif %}
+
+    <h4>Welcome {{ username }}!</h4>
+    <h3>Results ({{ books|length }}):</h3>
+    <div class="row">
+        {% for book in books %}
+            <div class="col d-flex justify-content-center card-row">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title text-center"><i>{{ book.title }}</i></h5>
+                        <h5 class="card-text">ISBN: {{ book.isbn }}</h5>
+                        <h5 class="card-text">Author: {{ book.author }}</h5>
+                        <h5 class="card-text">Year: {{ book.year }}</h5>
+                        <a href={{ url_for('book', isbn=book.isbn, author=book.author, title=book.title, year=book.year) }}><button class="btn btn-primary">Go To Book</button></a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}>

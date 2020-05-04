@@ -43,7 +43,7 @@ def login_user():
     password = request.form.get("password")
     if dao.matches(username, password):
         session['user'] = username
-        return redirect(url_for("book"))
+        return redirect(url_for("search"))
     else:
         return render_template("login.html", name="Login", error=True)
 
@@ -68,25 +68,55 @@ def signup_user():
         # TODO this is actually maybe not quiiiiite how it's supposed to work oops fix???
         return render_template("signup.html", name="Signup", message="User already exists!")
 
-@app.route("/book/")
-def book():
+@app.route("/results/")
+def results():
+    # If not logged in, display a message directing you to login
     if 'user' not in session.keys():
-        return render_template("book_home.html", name="Book", logged_in=False)
-    return render_template("book_home.html", name="Book", username=session['user'], logged_in=True)
+        return render_template("results.html", name="Book", logged_in=False)
 
+    mode = request.args.get('query_type')
+    query_string = request.args.get('query')
+
+    if mode not in ['isbn', 'author', 'title']:
+        return render_template("results.html", name="Book", error=True, logged_in=True)
+    
+    books = dao.get_books(mode, query_string)
+    print(books)
+    
+    return render_template("results.html", name="Book", username=session['user'], logged_in=True, books=books)
+
+@app.route("/book/<isbn>")
+def book(isbn):
+    title = request.args.get('title')
+    author = request.args.get('author')
+    year = request.args.get('year')
+    print("ISBN: ", isbn)
+    book_info = bookapi.query(isbn)['books'][0]
+    print(book_info)
+    reviews_count = book_info['reviews_count']
+    average_rating = book_info['average_rating']
+
+    return render_template("book.html", name='Book', title=title, isbn=isbn, author=author, year=year, reviews_count=reviews_count, average_rating=average_rating)
+    
+
+@app.route("/search/")
+def search():
+    return render_template("search.html")
 
 @app.route("/api/<isbn>")
 def api(isbn):
-    basic_info = dao.get_bookinfo(isbn)
+    basic_info = dao.get_books('isbn', isbn)[0]
     if basic_info is None:
         return "404 error!", 404
+    
+    print(basic_info)
 
     book_info = bookapi.query(isbn)['books'][0]
     resp = {
-        'isbn':   basic_info.isbn,
-        'title':  basic_info.title,
-        'author': basic_info.author,
-        'year':   basic_info.year,
+        'isbn':   basic_info['isbn'],
+        'title':  basic_info['title'],
+        'author': basic_info['author'],
+        'year':   basic_info['year'],
         'review_count': book_info['reviews_count'],
         'average_score': book_info['average_rating']
     }

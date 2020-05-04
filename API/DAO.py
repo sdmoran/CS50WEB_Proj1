@@ -12,10 +12,6 @@ class DAO:
         self.engine = create_engine(os.getenv("DATABASE_URL"))
         self.db = scoped_session(sessionmaker(bind=self.engine))
 
-    def get_bookinfo(self, isbn):
-        ### TODO make this real sql not sqlalchemy
-        return self.db.query(Book).filter_by(isbn=isbn).first()
-
     def add_user(self, username, password):
         # Hash password
         salt = username
@@ -70,3 +66,23 @@ class DAO:
         print("STORED: ", stored_password)
         print("PROVIDED: ", password)
         return stored_password == self.get_hash(password, username)
+
+    def get_books(self, mode, query_string):
+        print('mode', mode)
+        print('query_string', query_string)
+        if mode not in ['isbn', 'author', 'title']:
+            return []
+        query = f"SELECT isbn, title, author, year FROM books WHERE {mode} ~ :query_string;"
+        query = text(query)
+        response = self.db.execute(query, {'mode': mode, 'query_string': query_string})
+
+        result = [{'isbn': row['isbn'], 'title': row['title'], 'author': row['author'], 'year': row['year']} for row in response ]
+
+        print(result)
+        return result
+
+    def get_reviews(self, title):
+        query = text("SELECT username, rating, review_content FROM reviews WHERE title=:title;")
+        response = self.db.execute(query, {'title':title})
+        return response
+

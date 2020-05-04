@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% set message = "Search" %}
+
+{% block body %}
+    <div class="container">
+        <h2>Enter your search criteria.</h2>
+        <form action="{{ url_for('results') }}" method="get">
+            <select id="query_type" class="form-control" name="query_type">
+                <option value="isbn">ISBN</option>
+                <option value="author">Author</option>
+                <option value="title">Title</option>
+            </select> 
+            <input type="text" name="query" placeholder="query">
+            <button>Submit</button>
+        </form>
+    </div>
+{% endblock %}

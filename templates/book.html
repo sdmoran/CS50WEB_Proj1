@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container">
+    <h3>{{ title }}</h3>
+    <h3>{{ isbn }}</h3>
+    <h3>{{ author }}</h3>
+    <h3>{{ year }}</h3>
+    <h3>Avg. Rating: {{ average_rating }}</h3>
+    <h3>Reviews: {{ reviews_count }}</h3>
+</div>
+{% endblock %}

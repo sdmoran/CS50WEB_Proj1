@@ -8,10 +8,12 @@ db = scoped_session(sessionmaker(bind=engine))
 
 db.execute("DROP TABLE books;")
 db.execute("DROP TABLE users;")
+db.execute("DROP TABLE reviews;")
 
 try:
     db.execute("CREATE TABLE books(isbn VARCHAR(200) PRIMARY KEY, title VARCHAR(200), author VARCHAR(200), year integer);")
     db.execute("CREATE TABLE users(id SERIAL PRIMARY KEY, username VARCHAR(50) UNIQUE NOT NULL, password_hash VARCHAR(355) NOT NULL);")
+    db.execute("CREATE TABLE reviews(username VARCHAR(50) REFERENCES user(username), title VARCHAR(200) REFERENCES books(title), review_content TEXT, rating INTEGER, PRIMARY KEY(username, title));")
 except Exception as e:
     print(e)
     sys.exit(-1)
