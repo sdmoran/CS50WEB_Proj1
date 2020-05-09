@@ -1,12 +1,44 @@
 {% extends "base.html" %}
 
 {% block body %}
-<div class="container">
-    <h3>{{ title }}</h3>
-    <h3>{{ isbn }}</h3>
-    <h3>{{ author }}</h3>
-    <h3>{{ year }}</h3>
-    <h3>Avg. Rating: {{ average_rating }}</h3>
-    <h3>Reviews: {{ reviews_count }}</h3>
-</div>
+    {% if error %}
+        <div class="container">
+            <h3>An error occured. The ISBN is probably invalid!</h3>
+        </div>
+    {% else %}
+        <div class="container">
+            <h3><i>{{ title }}</i></h3>
+            <h3>ISBN: {{ isbn }}</h3>
+            <h3>Author: {{ author }}</h3>
+            <h3>Published: {{ year }}</h3>
+            <h3>Total Goodreads Reviews: {{ reviews_count }}</h3>
+            <h3>Avg. Goodreads Rating: {{ average_rating }}</h3>
+            <hr/>
+            <h3>User Reviews</h3>
+            {% for review in reviews %}
+                <div class="col d-flex justify-content-center text-center card-row">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Rating: {{ review.rating }} / 5</h5>
+                            <h5 class="card-text"><i>{{ review.content }}</i></h5>
+                            <h5 class="card-text">- {{ review.username }}</h5>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <form action="{{ url_for('submit_review') }}" method="post">
+                <input type="text" name="review_content" placeholder="Review">
+                <select id="rating" class="form-control" name="rating">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+                <input type="hidden" name="isbn" value="{{isbn}}">
+                <button>Submit</button>
+            </form>
+        </div>
+    {% endif %}
 {% endblock %}

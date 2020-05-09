@@ -61,9 +61,7 @@ def signup_user():
     username = request.form.get("username")
     password = request.form.get("password")
     if dao.try_create_user(username, password):
-        session['user'] = username
-        print("SESSION USER: ", session['user'])
-        return redirect(url_for("book"))
+        return redirect(url_for("login"))
     else:
         # TODO this is actually maybe not quiiiiite how it's supposed to work oops fix???
         return render_template("signup.html", name="Signup", message="User already exists!")
@@ -83,41 +81,57 @@ def results():
     books = dao.get_books(mode, query_string)
     print(books)
     
-    return render_template("results.html", name="Book", username=session['user'], logged_in=True, books=books)
+    return render_template("results.html", name="Book", logged_in=True, books=books)
 
 @app.route("/book/<isbn>")
 def book(isbn):
-    title = request.args.get('title')
-    author = request.args.get('author')
-    year = request.args.get('year')
-    print("ISBN: ", isbn)
-    book_info = bookapi.query(isbn)['books'][0]
-    print(book_info)
+    book_info = bookapi.query(isbn)
+    if not book_info:
+        return render_template("book.html", error=True)
     reviews_count = book_info['reviews_count']
     average_rating = book_info['average_rating']
 
-    return render_template("book.html", name='Book', title=title, isbn=isbn, author=author, year=year, reviews_count=reviews_count, average_rating=average_rating)
+    book = dao.get_books('isbn', isbn, strict=True)
+    if len(book) < 1:
+        return render_template("book.html", error=True)
+    book = book[0]
+    title = book['title']
+    author = book['author']
+    year = book['year']
+    reviews = dao.get_reviews(isbn)
+    
+    return render_template("book.html", name='Book', title=title, isbn=isbn, author=author, 
+        year=year, reviews_count=reviews_count, average_rating=average_rating, reviews=reviews)
     
 
 @app.route("/search/")
 def search():
     return render_template("search.html")
 
+@app.route("/submit_review/", methods=['POST'])
+def submit_review():
+    username = session['user']
+    rating = request.form.get('rating')
+    review_content = request.form.get('review_content')
+    isbn = request.form.get('isbn')
+    dao.add_review(username, rating, review_content, isbn)
+    return redirect(url_for("book", isbn=isbn))
+
 @app.route("/api/<isbn>")
 def api(isbn):
-    basic_info = dao.get_books('isbn', isbn)[0]
-    if basic_info is None:
-        return "404 error!", 404
-    
-    print(basic_info)
+    try:
+        basic_info = dao.get_books('isbn', isbn)[0]
 
-    book_info = bookapi.query(isbn)['books'][0]
-    resp = {
-        'isbn':   basic_info['isbn'],
-        'title':  basic_info['title'],
-        'author': basic_info['author'],
-        'year':   basic_info['year'],
-        'review_count': book_info['reviews_count'],
-        'average_score': book_info['average_rating']
-    }
-    return resp
+        book_info = bookapi.query(isbn)
+
+        resp = {
+            'isbn':   basic_info['isbn'],
+            'title':  basic_info['title'],
+            'author': basic_info['author'],
+            'year':   basic_info['year'],
+            'review_count': book_info['reviews_count'],
+            'average_score': book_info['average_rating']
+        }
+        return resp
+    except Exception:
+        return "404 error!", 404

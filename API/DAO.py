@@ -67,22 +67,30 @@ class DAO:
         print("PROVIDED: ", password)
         return stored_password == self.get_hash(password, username)
 
-    def get_books(self, mode, query_string):
-        print('mode', mode)
-        print('query_string', query_string)
+    def get_books(self, mode, query_string, strict=False):
+        query = f"SELECT isbn, title, author, year FROM books WHERE {mode} ~ :query_string;"
         if mode not in ['isbn', 'author', 'title']:
             return []
-        query = f"SELECT isbn, title, author, year FROM books WHERE {mode} ~ :query_string;"
+        if strict:
+            query = f"SELECT isbn, title, author, year FROM books WHERE {mode} = :query_string;"
         query = text(query)
         response = self.db.execute(query, {'mode': mode, 'query_string': query_string})
-
         result = [{'isbn': row['isbn'], 'title': row['title'], 'author': row['author'], 'year': row['year']} for row in response ]
-
-        print(result)
         return result
 
-    def get_reviews(self, title):
-        query = text("SELECT username, rating, review_content FROM reviews WHERE title=:title;")
-        response = self.db.execute(query, {'title':title})
-        return response
+    def get_reviews(self, isbn):
+        query = text("SELECT username, rating, review_content FROM reviews WHERE isbn=:isbn;")
+        response = self.db.execute(query, {'isbn': isbn})
+        result = [{'username': row['username'], 'rating': row['rating'], 'content': row['review_content']} for row in response]
+        return result
+
+    def add_review(self, username, rating, review_content, isbn):
+        query = text("INSERT INTO reviews(username, rating, review_content, isbn) VALUES (:username, :rating, :review_content, :isbn);")
+        try:
+            self.db.execute(query, {'username': username, 'rating': rating, 'review_content': review_content, 'isbn': isbn})
+            self.db.commit()
+            return True
+        except Exception as e:
+            print(e)
+            return False
 
